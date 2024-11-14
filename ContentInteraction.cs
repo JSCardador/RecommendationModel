@@ -1,5 +1,8 @@
 using Microsoft.ML.Data;
 
+/// <summary>
+/// Representa una interacción de un usuario con un contenido.
+/// </summary>
 public class ContentInteraction
 {
     [KeyType(count: 100000)]

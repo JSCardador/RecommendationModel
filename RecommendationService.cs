@@ -13,6 +13,11 @@ public class RecommendationService
         _mlContext = new MLContext();
     }
 
+    /// <summary>
+    /// Carga un modelo de recomendación desde un archivo.
+    /// El modelo debe haber sido guardado previamente con el método Save del objeto MLContext.
+    /// </summary>
+    /// <param name="modelPath"></param>
     public void LoadModel(string modelPath)
     {
         using var stream = new FileStream(modelPath, FileMode.Open, FileAccess.Read, FileShare.Read);
@@ -21,15 +26,12 @@ public class RecommendationService
         _predictionEngine = _mlContext.Model.CreatePredictionEngine<ContentInteraction, Prediction>(_model);
     }
 
-    public float PredictScore(int userId, int contentId)
-    {
-        if (_predictionEngine == null)
-            throw new InvalidOperationException("El modelo no está cargado. Asegúrate de cargar el modelo antes de predecir.");
 
-        var prediction = _predictionEngine.Predict(new ContentInteraction { UserId = (uint)userId, ContentId = (uint)contentId });
-        return prediction.Score;
-    }
-
+    /// <summary>
+    /// Carga los datos de contenidos desde un archivo CSV. 
+    /// </summary>
+    /// <param name="dataPath"></param>
+    /// <returns></returns>
     public List<ContentRecord> LoadContentData(string dataPath)
     {
         using (var reader = new StreamReader(dataPath))
@@ -41,9 +43,14 @@ public class RecommendationService
         {
             return csv.GetRecords<ContentRecord>().ToList();
         }
-
     }
 
+
+    /// <summary>
+    /// Entrena un modelo de recomendación basado en interacciones de usuario con contenidos.
+    /// El modelo se entrena utilizando el algoritmo de Factorización de Matrices.
+    /// </summary>
+    /// <param name="interactions"></param>
     public void TrainModel(IEnumerable<ContentInteraction> interactions)
     {
         var data = _mlContext.Data.LoadFromEnumerable(interactions);
@@ -62,10 +69,36 @@ public class RecommendationService
         _mlContext.Model.Save(_model, data.Schema, "model.zip");
     }
 
+
+    /// <summary>
+    /// Predice la puntuación de un usuario para un contenido específico basado en el modelo entrenado.
+    /// Crear un nuevo PredictionEngine cada vez que se realice una predicción es ineficiente.
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="contentId"></param>
+    /// <returns></returns>
     public float PredictScore(uint userId, uint contentId)
     {
         var predictionEngine = _mlContext.Model.CreatePredictionEngine<ContentInteraction, Prediction>(_model);
         var prediction = predictionEngine.Predict(new ContentInteraction { UserId = userId, ContentId = contentId });
+        return prediction.Score;
+    }
+
+
+    /// <summary>
+    /// Predice la puntuación de un usuario para un contenido específico basado en el modelo entrenado.
+    /// Utiliza el PredictionEngine pre-creado para mejorar la eficiencia.
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="contentId"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    public float PredictScore(int userId, int contentId)
+    {
+        if (_predictionEngine == null)
+            throw new InvalidOperationException("El modelo no está cargado. Asegúrate de cargar el modelo antes de predecir.");
+
+        var prediction = _predictionEngine.Predict(new ContentInteraction { UserId = (uint)userId, ContentId = (uint)contentId });
         return prediction.Score;
     }
 

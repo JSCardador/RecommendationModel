@@ -1,5 +1,8 @@
 using CsvHelper.Configuration.Attributes;
 
+/// <summary>
+/// Representa um registro de contenidos del Dataset.
+/// </summary>
 public class ContentRecord
 {
     [Name("id")]
