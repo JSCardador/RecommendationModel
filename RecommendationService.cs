@@ -15,11 +15,9 @@ public class RecommendationService
 
     public void LoadModel(string modelPath)
     {
-        // Cargar el modelo entrenado desde el archivo .zip
         using var stream = new FileStream(modelPath, FileMode.Open, FileAccess.Read, FileShare.Read);
         _model = _mlContext.Model.Load(stream, out var schema);
 
-        // Crear el PredictionEngine a partir del modelo cargado
         _predictionEngine = _mlContext.Model.CreatePredictionEngine<ContentInteraction, Prediction>(_model);
     }
 
@@ -28,7 +26,6 @@ public class RecommendationService
         if (_predictionEngine == null)
             throw new InvalidOperationException("El modelo no está cargado. Asegúrate de cargar el modelo antes de predecir.");
 
-        // Realizar una predicción
         var prediction = _predictionEngine.Predict(new ContentInteraction { UserId = (uint)userId, ContentId = (uint)contentId });
         return prediction.Score;
     }
@@ -38,8 +35,8 @@ public class RecommendationService
         using (var reader = new StreamReader(dataPath))
         using (var csv = new CsvHelper.CsvReader(reader, new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture)
         {
-            HeaderValidated = null, // Ignora validación de encabezados
-            MissingFieldFound = null // Ignora campos faltantes
+            HeaderValidated = null, 
+            MissingFieldFound = null 
         }))
         {
             return csv.GetRecords<ContentRecord>().ToList();
